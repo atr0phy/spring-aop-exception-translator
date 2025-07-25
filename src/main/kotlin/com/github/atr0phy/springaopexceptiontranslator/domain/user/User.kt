@@ -4,9 +4,19 @@ import java.util.UUID
 
 data class UserId(val value: UUID) {
     companion object {
-        fun generate(): UserId {
-            return UserId(UUID.randomUUID())
+        fun of(
+            value: String,
+        ): UserId {
+            return UserId(value = UUID.fromString(value))
         }
+
+        fun generate(): UserId {
+            return UserId(value = UUID.randomUUID())
+        }
+    }
+
+    override fun toString(): String {
+        return value.toString()
     }
 }
 

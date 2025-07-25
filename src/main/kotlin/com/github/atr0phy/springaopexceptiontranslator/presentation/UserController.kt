@@ -1,19 +1,15 @@
 package com.github.atr0phy.springaopexceptiontranslator.presentation
 
-import com.github.atr0phy.springaopexceptiontranslator.domain.repository.UserRepository
-import com.github.atr0phy.springaopexceptiontranslator.domain.user.User
-import com.github.atr0phy.springaopexceptiontranslator.domain.user.UserId
-import com.github.atr0phy.springaopexceptiontranslator.domain.user.UserName
+import com.github.atr0phy.springaopexceptiontranslator.application.usecase.user.*
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.*
-import java.util.UUID
 
-
-// application layerはわざと省略
 @RestController
 @RequestMapping("/users")
 class UserController(
-    private val userRepository: UserRepository,
+    private val getUserUseCase: GetUserUseCase,
+    private val createUserUseCase: CreateUserUseCase,
+    private val deleteUserUseCase: DeleteUserUseCase,
 ) {
 
     data class UserResponse(
@@ -21,13 +17,31 @@ class UserController(
         val name: String,
     ) {
         companion object {
-            fun of(user: User): UserResponse {
-                return with(user) {
-                    UserResponse(
-                        id = id.value.toString(),
-                        name = name.value,
-                    )
-                }
+            fun of(
+                output: GetUserOutput,
+            ): UserResponse {
+                return UserResponse(
+                    id = output.id.value.toString(),
+                    name = output.name.value,
+                )
+            }
+
+            fun of(
+                output: CreateUserOutput,
+            ): UserResponse {
+                return UserResponse(
+                    id = output.id.value.toString(),
+                    name = output.name.value,
+                )
+            }
+
+            fun of(
+                output: DeleteUserOutput,
+            ): UserResponse {
+                return UserResponse(
+                    id = output.id.value.toString(),
+                    name = output.name.value,
+                )
             }
         }
     }
@@ -36,10 +50,16 @@ class UserController(
     fun getUser(
         @PathVariable userId: String,
     ): ResponseEntity<UserResponse> {
-        val user = userRepository.findById(UserId(UUID.fromString(userId)))
+        val output = getUserUseCase.handle(
+            input = GetUserInput(
+                userId = userId,
+            ),
+        )
 
         return ResponseEntity.ok(
-            UserResponse.of(user)
+            UserResponse.of(
+                output = output,
+            ),
         )
     }
 
@@ -51,14 +71,33 @@ class UserController(
     fun createUser(
         @RequestBody request: CreateUserRequest,
     ): ResponseEntity<UserResponse> {
-        val user = User.of(
-            UserName.of(request.name)
+        val output = createUserUseCase.handle(
+            input = CreateUserInput(
+                name = request.name,
+            ),
         )
 
-        userRepository.save(user)
+        return ResponseEntity.ok(
+            UserResponse.of(
+                output = output,
+            ),
+        )
+    }
+
+    @DeleteMapping("/{userId}")
+    fun deleteUser(
+        @PathVariable userId: String,
+    ): ResponseEntity<UserResponse> {
+        val output = deleteUserUseCase.handle(
+            input = DeleteUserInput(
+                userId = userId,
+            ),
+        )
 
         return ResponseEntity.ok(
-            UserResponse.of(user)
+            UserResponse.of(
+                output = output,
+            ),
         )
     }
 }

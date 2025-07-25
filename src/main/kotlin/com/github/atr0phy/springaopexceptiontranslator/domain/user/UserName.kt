@@ -7,8 +7,10 @@ data class UserName(val value: String) {
         private const val MIN_LENGTH = 1
         private const val MAX_LENGTH = 256
 
-        fun of(value: String): UserName {
-            return UserName(value)
+        fun of(
+            value: String,
+        ): UserName {
+            return UserName(value = value)
         }
     }
 
@@ -19,5 +21,9 @@ data class UserName(val value: String) {
                 message = "ユーザ名は${MIN_LENGTH}以上${MAX_LENGTH}以下の長さである必要があります",
             )
         }
+    }
+
+    override fun toString(): String {
+        return value
     }
 }

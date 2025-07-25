@@ -1,5 +1,7 @@
 package com.github.atr0phy.springaopexceptiontranslator.infrastructure.repository
 
+import com.github.atr0phy.springaopexceptiontranslator.domain.exception.UserAlreadyExistsException
+import com.github.atr0phy.springaopexceptiontranslator.domain.exception.UserNotFoundException
 import com.github.atr0phy.springaopexceptiontranslator.domain.repository.UserRepository
 import com.github.atr0phy.springaopexceptiontranslator.domain.user.User
 import com.github.atr0phy.springaopexceptiontranslator.domain.user.UserId
@@ -31,19 +33,44 @@ class UserRepositoryImpl: UserRepository {
             ),
         )
     )
-    override fun findById(id: UserId): User {
-        return map.getOrElse(id.value) { throw RuntimeException("ユーザが存在しません") }
+    override fun findById(
+        id: UserId,
+    ): User {
+        return map.getOrElse(id.value) { throw UserNotFoundException(userId = id) }
             .toUser()
     }
 
-    override fun save(user: User) {
+    override fun save(
+        user: User,
+    ) {
         val entity = UserEntity(
             id = user.id.value,
             name = user.name.toString(),
         )
 
         if(map.putIfAbsent(user.id.value, entity) != null) {
-            throw RuntimeException("ユーザがすでに存在します")
+            throw UserAlreadyExistsException(userId = user.id)
+        }
+    }
+
+    override fun findByIdForUpdate(
+        id: UserId,
+    ): User {
+        // インメモリ実装では、synchronizedで排他制御を模擬
+        return synchronized(map) {
+            map.getOrElse(id.value) { throw UserNotFoundException(userId = id) }
+                .toUser()
+        }
+    }
+
+    override fun delete(
+        id: UserId,
+    ) {
+        // 削除もsynchronizedで排他制御
+        synchronized(map) {
+            if(map.remove(id.value) == null) {
+                throw UserNotFoundException(userId = id)
+            }
         }
     }
 }
